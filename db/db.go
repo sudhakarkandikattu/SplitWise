@@ -31,4 +31,60 @@ func createTables() {
 	if err != nil {
 		panic("could not create users table.")
 	}
+	createGroupTable := `
+	CREATE TABLE IF NOT EXISTS groups (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL,
+		created_date DATETIME NOT NULL
+	)
+	`
+	_, err = DB.Exec(createGroupTable)
+	if err != nil {
+		panic("could not create groups table.")
+	}
+
+	createGroupParticipantsTable := `
+	CREATE TABLE IF NOT EXISTS group_participants (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		group_id INTEGER,
+		user_id INTEGER,
+		role INTEGER,
+		FOREIGN KEY(group_id) REFERENCES groups(id),
+		FOREIGN KEY(user_id) REFERENCES users(id)
+	)
+	`
+	_, err = DB.Exec(createGroupParticipantsTable)
+	if err != nil {
+		panic("could not create group participants table.")
+	}
+	createExpenseTable := `
+	CREATE TABLE IF NOT EXISTS expense (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		title TEXT NOT NULL,
+		amount INTEGER,
+		group_id INTEGER,
+		payor_id INTEGER,
+		created_date DATETIME NOT NULL,
+		FOREIGN KEY(group_id) REFERENCES groups(id),
+		FOREIGN KEY(payor_id) REFERENCES users(id)
+	)
+	`
+	_, err = DB.Exec(createExpenseTable)
+	if err != nil {
+		panic("could not create expense table.")
+	}
+	createExpenseMembersTable := `
+	CREATE TABLE IF NOT EXISTS expense_members (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		expense_id INTEGER,
+		user_id INTEGER,
+		owed_amount INTEGER,
+		FOREIGN KEY(expense_id) REFERENCES expense(id),
+		FOREIGN KEY(user_id) REFERENCES users(id)
+	)
+	`
+	_, err = DB.Exec(createExpenseMembersTable)
+	if err != nil {
+		panic("could not create  expense_members table.")
+	}
 }
