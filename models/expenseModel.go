@@ -1,16 +1,17 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/sudhakarkandikattu/SplitWise/db"
 )
 
 type Expense struct {
-	ID      int64   `json:"id"`
-	Title   string  `json:"title" binding:"required"`
-	Amount  float64 `json:"amount" binding:"required"`
-	Date    time.Time
+	ID      int64            `json:"id"`
+	Title   string           `json:"title" binding:"required"`
+	Amount  float64          `json:"amount" binding:"required"`
+	Date    time.Time        `json:"created_date"`
 	GroupId int64            `json:"group_id" binding:"required"`
 	PayorId int64            `json:"payor_id" binding:"required"`
 	Members []ExpenseMembers `json:"custom_split" binding:"required"`
@@ -51,7 +52,44 @@ func (e *Expense) Save() error {
 			if err != nil {
 				return err
 			}
+			err = UpdateUserToUserOwes(e.GroupId, e.PayorId, member.UserId, member.OwedAmount, tx)
+			if err != nil {
+				fmt.Println(err)
+				return err
+			}
 		}
 	}
 	return nil
+}
+func getExpenseMembersByExpenseId(expenseId int64) ([]ExpenseMembers, error) {
+	query := "select user_id,owed_amount from expense_members where expense_id = ?"
+	rows, err := db.DB.Query(query, expenseId)
+	if err != nil {
+		return nil, err
+	}
+	var expenseMembers []ExpenseMembers
+	for rows.Next() {
+		var member ExpenseMembers
+		rows.Scan(&member.UserId, &member.OwedAmount)
+		expenseMembers = append(expenseMembers, member)
+	}
+	return expenseMembers, nil
+}
+func getGroupExpensesByGroupId(groupId int64) ([]Expense, error) {
+	query := "select * from expense where group_id = ?"
+	rows, err := db.DB.Query(query, groupId)
+	if err != nil {
+		return nil, err
+	}
+	var expenseList []Expense
+	for rows.Next() {
+		var expense Expense
+		rows.Scan(&expense.ID, &expense.Title, &expense.Amount, &expense.GroupId, &expense.PayorId, &expense.Date)
+		expense.Members, err = getExpenseMembersByExpenseId(expense.ID)
+		if err != nil {
+			return nil, err
+		}
+		expenseList = append(expenseList, expense)
+	}
+	return expenseList, nil
 }

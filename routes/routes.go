@@ -10,4 +10,7 @@ func RegisterRoutes(server *gin.Engine) {
 	//gets
 	server.GET("/getusergroups/:id", getUserGroups)
 	server.GET("/allusers", getUsers)
+	server.GET("/group/:groupid/user/:userid", getUserToUserOwes)
+	server.GET("/getgroup/:groupid", getGroupById)
+
 }

@@ -2,10 +2,12 @@ POST http://localhost:8080/addgroup
 Content-Type: application/json
 
 {
-    "name": "Personal",
-    "user_id": 2,
+    "name": "Home",
+    "creator_id": 1,
     "members": [
-        {"id": 3, "name": "sudhakar1", "email": "sudhakar1@gmail.com", "password": "sudha@88"},
-        {"id": 2, "name": "lekha", "email": "lekha@gmail.com", "password": "sudha@88"}
+        {"user_id": 1},
+        {"user_id": 2},
+        {"user_id": 3},
+        {"user_id": 4}
     ]
 }

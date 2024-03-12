@@ -44,15 +44,14 @@ func GetAllUsers() ([]User, error) {
 	}
 	return users, nil
 }
-func fetchUserByID(userID int) (User, error) {
-	var user User
+func fetchUserNameByID(userID int) (string, error) {
+	var username string
 
-	query := "SELECT id, name, email, password FROM users WHERE id = ?"
+	query := "SELECT name FROM users WHERE id = ?"
 
-	err := db.DB.QueryRow(query, userID).Scan(&user.ID, &user.Name, &user.Email, &user.Password)
+	err := db.DB.QueryRow(query, userID).Scan(&username)
 	if err != nil {
-		return user, err
+		return "", err
 	}
-
-	return user, nil
+	return username, nil
 }

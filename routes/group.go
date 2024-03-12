@@ -34,3 +34,15 @@ func getUserGroups(context *gin.Context) {
 	}
 	context.JSON(http.StatusOK, groups)
 }
+func getGroupById(context *gin.Context) {
+	groupId, err := strconv.ParseInt(context.Param("groupid"), 10, 64)
+	if err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"message": "not a valid id for a group"})
+	}
+	group, err := models.GetGroupByGroupId(groupId)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"message": "could not fetch the Groups by group id"})
+		return
+	}
+	context.JSON(http.StatusOK, group)
+}

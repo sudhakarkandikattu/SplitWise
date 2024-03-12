@@ -1,18 +1,23 @@
 package models
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/sudhakarkandikattu/SplitWise/db"
 )
 
 type Group struct {
-	GroupId          int64  `json:"id"`
+	GroupId          int64
 	GroupName        string `json:"name" binding:"required"`
-	GroupCreatorId   int64  `json:"user_id" binding:"required"`
+	GroupCreatorId   int64  `json:"creator_id" binding:"required"`
 	GroupCreatedTime time.Time
-	GroupMembers     []User `json:"members" binding:"required"`
+	GroupMembers     []GroupMember `json:"members" binding:"required"`
+	GroupExpenses    []Expense
+}
+type GroupMember struct {
+	MemberId   int64 `json:"user_id" binding:"required"`
+	MemberName string
+	Role       int64 `json:"role"`
 }
 
 func (g *Group) Save() error {
@@ -41,11 +46,10 @@ func (g *Group) Save() error {
 	g.GroupId = groupId
 	for _, participant := range g.GroupMembers {
 		role := 0
-		if g.GroupCreatorId == participant.ID {
+		if g.GroupCreatorId == participant.MemberId {
 			role = 1
 		}
-		_, err := tx.Exec("INSERT into group_participants(group_id,user_id,role) values (?,?,?) ", groupId, participant.ID, role)
-		fmt.Println(groupId, " ", participant.ID, " ", role)
+		_, err := tx.Exec("INSERT into group_participants(group_id,user_id,role) values (?,?,?) ", groupId, participant.MemberId, role)
 		if err != nil {
 			return err
 		}
@@ -76,7 +80,6 @@ func GetGroupsById(id int64) ([]Group, error) {
 		}
 		group.GroupId = groupID
 		group.GroupCreatorId = id
-		group.GroupMembers, err = getGroupMembersByGroupId(groupID)
 		if err != nil {
 			return nil, err
 		}
@@ -92,26 +95,48 @@ func GetGroupsById(id int64) ([]Group, error) {
 
 	return groups, nil
 }
-func getGroupMembersByGroupId(groupId int64) ([]User, error) {
-	query := "select user_id from group_participants where group_id = ?"
+func getGroupMembersByGroupId(groupId int64) ([]GroupMember, error) {
+	query := "select user_id,role from group_participants where group_id = ?"
 	rows, err := db.DB.Query(query, groupId)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var groupMembers []User
+	var groupMembers []GroupMember
 	for rows.Next() {
-		var member User
-		var memberId int
-		err := rows.Scan(&memberId)
+		var member GroupMember
+		err := rows.Scan(&member.MemberId, &member.Role)
 		if err != nil {
 			return nil, err
 		}
-		member, err = fetchUserByID(memberId)
+		member.MemberName, err = fetchUserNameByID(int(member.MemberId))
 		if err != nil {
 			return nil, err
 		}
 		groupMembers = append(groupMembers, member)
 	}
 	return groupMembers, nil
+}
+func GetGroupByGroupId(groupId int64) (*Group, error) {
+	query := "SELECT * FROM groups WHERE id = ?"
+	row := db.DB.QueryRow(query, groupId)
+	var group Group
+	err := row.Scan(&group.GroupId, &group.GroupName, &group.GroupCreatedTime)
+	if err != nil {
+		return nil, err
+	}
+	group.GroupMembers, err = getGroupMembersByGroupId(groupId)
+	if err != nil {
+		return nil, err
+	}
+	group.GroupExpenses, err = getGroupExpensesByGroupId(groupId)
+	for _, member := range group.GroupMembers {
+		if member.Role == 1 {
+			group.GroupCreatorId = member.MemberId
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &group, nil
 }

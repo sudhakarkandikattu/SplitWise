@@ -2,12 +2,13 @@ POST http://localhost:8080/addexpense
 Content-Type: application/json
 
 {
-    "title": "Dinner with friends",
-    "amount": 100.00,
+    "title": "test1",
+    "amount": 750.00,
     "group_id": 1,
-    "payor_id": 2,
+    "payor_id": 4,
     "custom_split": [
-        {"user_id": 1, "owed_amount": 80.00},
-        {"user_id": 3, "owed_amount": 10.00}
+        {"user_id": 2, "owed_amount": 187.50},
+        {"user_id": 1, "owed_amount": 187.50},
+        {"user_id": 3, "owed_amount": 187.50}
     ]
 }

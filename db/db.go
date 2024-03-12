@@ -14,8 +14,8 @@ func InitDB() {
 	if err != nil {
 		panic("can't connect to DB")
 	}
-	DB.SetMaxOpenConns(10)
-	DB.SetMaxIdleConns(5)
+	DB.SetMaxOpenConns(20)
+	DB.SetMaxIdleConns(15)
 	createTables()
 }
 func createTables() {
@@ -86,5 +86,21 @@ func createTables() {
 	_, err = DB.Exec(createExpenseMembersTable)
 	if err != nil {
 		panic("could not create  expense_members table.")
+	}
+	createUserToUserOwesTable := `
+	CREATE TABLE IF NOT EXISTS user_to_user_owes (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		group_id INTEGER,
+		payor INTEGER,
+		payee INTEGER,
+		debt_amount FLOAT,
+		FOREIGN KEY(group_id) REFERENCES groups(id),
+		FOREIGN KEY(payor) REFERENCES users(id),
+		FOREIGN KEY(payee) REFERENCES users(id)
+	)
+	`
+	_, err = DB.Exec(createUserToUserOwesTable)
+	if err != nil {
+		panic("could not create  user_to_user_owes table.")
 	}
 }
